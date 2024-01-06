@@ -1,12 +1,11 @@
 import status_invest
 import asyncio
-from pprint import pprint
 import math
 import pandas
 import numpy as np
 import time
+from config.settings import use_cache
 
-use_cache = False
 
 async def calculate_earning_yield(ticker_info):
     """ """
@@ -110,11 +109,7 @@ async def main():
     tasks = []
     roic_ignore = True
     parallel_number = 6
-    for index, ticker in enumerate(resp.json()):
-        # if index == 10:
-            # break
-        # if ticker.get('ticker') == 'VALE3':
-        # task = await process_ticker_info(ticker)
+    for ticker in resp.json():
         tasks.append(process_ticker_info(ticker))
         if len(tasks) > parallel_number and not use_cache:
             stocks_data += await asyncio.gather(*tasks)
@@ -144,7 +139,10 @@ async def main():
         sheet_name='stocks', index=False, engine='openpyxl',
         freeze_panes=(1, 0)
     )
+
     print(f'Finished in {time.perf_counter() - start} seconds')
+    tickers = tickers_df.to_dict(orient='records')
+    print(tickers)
 
 
 if __name__ == '__main__':

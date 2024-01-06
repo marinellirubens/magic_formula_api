@@ -8,12 +8,10 @@ import os
 import pickle
 import datetime
 import aiofiles
-import io
-import time
+from config.settings import use_cache, file_ttl_minutes
 
 
-file_ttl = datetime.timedelta(minutes=50)
-use_cache = False
+file_ttl = datetime.timedelta(minutes=file_ttl_minutes)
 
 
 async def get_stocks_info():
@@ -120,7 +118,7 @@ async def save_cached_info(identifier, obj):
         await f.write(pickled_foo)
 
 
-async def get_cached_info(identifier):
+async def get_cached_info(identifier: str):
     if not use_cache:
         return None
 
@@ -141,7 +139,7 @@ async def get_cached_info(identifier):
     return pickle.loads(pickled_foo)
 
 
-async def format_stock_page(page_content):
+async def format_stock_page(page_content: bytes):
     regex = re.compile("^[-\d\,%\.]*$")
     page = BeautifulSoup(page_content, "html.parser") 
     dom = lxml.etree.HTML(str(page)) 
