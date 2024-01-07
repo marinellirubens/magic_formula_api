@@ -3,7 +3,10 @@ import threading
 
 
 file_ttl_minutes = 50
+time_to_sleep_minutes = 60
+parallel_number_requests = 6
 use_cache = False
+
 request_uniques = threading.local()
 """variable to handle information that should not be shared between threads"""
 
