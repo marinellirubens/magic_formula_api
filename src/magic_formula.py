@@ -1,19 +1,26 @@
-import status_invest
 import asyncio
 import math
-import pandas
-import numpy as np
 import time
+
 from config import settings, parser
 from databases import redis
+import status_invest
 
 
-async def calculate_earning_yield(ticker_info):
-    """ """
+async def calculate_earning_yield(ticker_info: dict) -> float:
+    """Calculate earning yield based on ticker info
+
+    Args:
+        ticker_info (dict): dictionary with the information on the ticker
+
+    Returns:
+        returns the value of the earning yield in percentage, if error returns 0
+
+    """
     try:
         ev_ebit = ticker_info.get('ev_ebit', 0)
         ev = ticker_info.get('Valor de firma', 0)
-        print(ticker_info.get('ticker'), ev, ev_ebit)
+        # print(ticker_info.get('ticker'), ev, ev_ebit)
         ebit = ev / ev_ebit
         earning_yield = round(ebit / ev, 2)
     except ZeroDivisionError:
@@ -50,8 +57,13 @@ async def calculate_graham_upside(
         graham_vi: float) -> float:
     """Calculates the Graham upside based on the calculated VI
 
-    :return: Graham upside
-    :rtype: float
+    Args:
+        current_price (float): current stock price
+        graham_vi (float): intrinsic value calculated using graham method
+
+    Returns(float):
+        Graham upside
+
     """
     if current_price <= 0 or graham_vi <= 0:
         return 0
@@ -61,10 +73,19 @@ async def calculate_graham_upside(
     return round(pre_vi, 2)
 
 
-async def process_ticker_info(ticker_general):
+async def process_ticker_info(ticker_general: dict) -> list:
+    """Process the information on the ticker and return the relevant fields
+
+    Args:
+        ticker_general (dict): ticker information collected on status invest
+
+    Returns:
+        returns a list with the fields calculated for the ticker
+
+    """
     symbol = ticker_general.get('ticker', 'Not found')
 
-    print(f'Processing ticker {symbol}')
+    print(f'Starting process for ticker {symbol}')
     page = await status_invest.get_stocks_page_info(symbol)
     results = await status_invest.format_stock_page(page[1].content)
     ticker_general.update(results)
@@ -93,45 +114,46 @@ async def process_ticker_info(ticker_general):
         graham_vi,
         graham_upside
     ]
+    print(f'Finishing process for ticker {symbol}')
     return ticker_info
 
 
 async def main():
-    start = time.perf_counter()
-    resp = await status_invest.get_stocks_info()
-    # for item in resp.json():
-        # results = await asyncio.gather(
-            # get_stocks_historical_info(item.get('ticker')),
-            # get_stocks_historical_price(item.get('ticker')),
-            # get_stocks_page_info(item.get('ticker'))
-        # )
-        # break
-    stocks_data = []
-    tasks = []
-    roic_ignore = True
-    parallel_number = 6
-    for ticker in resp.json():
-        tasks.append(process_ticker_info(ticker))
-        if len(tasks) > parallel_number and not settings.use_cache:
-            stocks_data += await asyncio.gather(*tasks)
-            tasks = []
-            time.sleep(0.1)
-
-    if tasks:
-        stocks_data += await asyncio.gather(*tasks)
+    print('Starting process')
+    identifier = 'magic_formula_main_data'
 
     credentials = parser.read_ini_file(settings.credentials_file_path)
     if not credentials:
         return
     settings.credentials = credentials
 
-    identifier = 'magic_formula_main_data'
     conn_info = redis.RedisConnectionInfo(
         settings.credentials['redis']['hostname'],
         settings.credentials['redis'].getint('port'),
         settings.credentials['redis']['password'],
     )
-    await redis.set_object_on_redis_async(conn_info, identifier, stocks_data, time_to_live=None)
+
+    while True:
+        stocks_data = []
+        tasks = []
+
+        print('Processing stock information')
+        resp = await status_invest.get_stocks_info()
+        for ticker in resp.json():
+            tasks.append(process_ticker_info(ticker))
+            if len(tasks) > settings.parallel_number_requests and not settings.use_cache:
+                stocks_data += await asyncio.gather(*tasks)
+                tasks = []
+                time.sleep(0.1)
+
+        if tasks:
+            stocks_data += await asyncio.gather(*tasks)
+
+        print('writing into redis')
+        await redis.set_object_on_redis_async(conn_info, identifier, stocks_data, time_to_live=None)
+
+        print('Waiting for next itteration')
+        time.sleep(settings.time_to_sleep_minutes * 60)
 
 
 if __name__ == '__main__':
