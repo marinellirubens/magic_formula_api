@@ -32,7 +32,7 @@ async def get_redis_connection_async(
         connection_info: RedisConnectionInfo = None,
         host: str = '',
         port: int = None,
-        password: str = '') -> Union[None, Redis[bytes]]:
+        password: str = '') -> Union[None, Redis]:
     """Creates a connection pool if does not exists and return a connection from this pool
 
     Args:
@@ -90,7 +90,8 @@ async def write_object_into_redis_async(key: str, object_to_save: Union[dict, st
         object_to_save = pickle.dumps(object_to_save)
 
     ret = await redis_conn.set(name=key, value=object_to_save, keepttl=time_to_live)
-    await redis_conn.expire(key, time_to_live)
+    if time_to_live:
+        await redis_conn.expire(key, time_to_live)
     return ret
 
 
