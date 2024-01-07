@@ -1,3 +1,9 @@
 redis
 Flask
 Flask[async]
+simplejson
+httpx
+bs4
+lxml
+aiofiles
+requests
