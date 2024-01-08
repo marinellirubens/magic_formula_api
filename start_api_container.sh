@@ -11,5 +11,5 @@ ENTRYPOINT="/usr/bin/entrypoint_api.sh"
 
 docker rm -f $CONTAINER_NAME
 # TODO: include the mapping of the credential file
-docker run --entrypoint $ENTRYPOINT -d --restart unless-stopped --link redis_mf:redis_mf -p 8090:8090 --name $CONTAINER_NAME $TIMEZONE $IMAGE_NAME
+docker run --entrypoint $ENTRYPOINT -d --restart unless-stopped --link magic_formula_redis:magic_formula_redis -p 8090:8090 --name $CONTAINER_NAME $TIMEZONE $IMAGE_NAME
 
