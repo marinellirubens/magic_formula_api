@@ -3,6 +3,7 @@ USER root
 
 WORKDIR /opt/magic_formula
 #RUN apt update && apt install -y curl vim procps && apt clean
+ENV TZ=America/Sao_Paulo
 
 ADD ./requirements.txt /opt/magic_formula/requirements.txt
 RUN pip install -r requirements.txt
