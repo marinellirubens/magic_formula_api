@@ -1,5 +1,6 @@
 redis
 Flask
+Flask-cors
 Flask[async]
 simplejson
 httpx
@@ -7,3 +8,6 @@ bs4
 lxml
 aiofiles
 requests
+gunicorn
+pandas
+openpyxl
