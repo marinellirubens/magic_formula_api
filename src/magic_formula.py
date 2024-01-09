@@ -2,6 +2,7 @@ import asyncio
 import math
 import time
 import logging
+import traceback
 
 from config import settings, parser
 from databases import redis
@@ -154,9 +155,13 @@ async def main():
         for ticker in resp.json().get('list', []):
             tasks.append(process_ticker_info(ticker))
             if len(tasks) > settings.parallel_number_requests and not settings.use_cache:
-                stocks_data += await asyncio.gather(*tasks)
+                try:
+                    stocks_data += await asyncio.gather(*tasks)
+                    time.sleep(0.1)
+
+                except:
+                    logger.error(f'error tring to collect information{traceback.print_exc()}')
                 tasks = []
-                time.sleep(0.1)
 
         if tasks:
             stocks_data += await asyncio.gather(*tasks)
