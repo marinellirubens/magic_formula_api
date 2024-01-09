@@ -36,7 +36,7 @@ async def get_stocks_info():
       'sec-fetch-site': 'same-origin',
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)'
     }
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
         resp = await client.get(url, headers=headers)
 
     await save_cached_info('get_stocks_info', resp)
@@ -63,7 +63,7 @@ async def get_stocks_historical_info(ticker: str):
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)'
     }
     args = f'ticker={ticker}&time=5'
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
         resp = await client.post(f"{url}?{args}", headers=headers)
     await save_cached_info(f'get_stocks_historical_info_{ticker}', resp)
     return ticker, resp
@@ -83,7 +83,7 @@ async def get_stocks_historical_price(ticker: str):
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)'
     }
     args = f'ticker={ticker}&type=4&currences%5B%5D=1'
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
         resp = await client.post(f"{url}?{args}", headers=headers)
 
     await save_cached_info(f'get_stocks_historical_price_{ticker}', resp)
@@ -102,7 +102,7 @@ async def get_stocks_page_info(ticker):
       'x-requested-with': 'XMLHttpRequest',
       'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)'
     }
-    async with httpx.AsyncClient(verify=False) as client:
+    async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
         resp = await client.get(url, headers=headers)
 
     # await save_cached_info(f'get_stocks_page_info_{ticker}', resp)
