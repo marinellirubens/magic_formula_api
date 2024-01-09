@@ -154,7 +154,7 @@ async def format_stock_page(page_content: bytes):
                     tag = child.text
                 else:
                     result[tag] = child.text
-                    if child.text == '--%':
+                    if child.text in {'--%', '-', '--'}:
                         result[tag] = '0%'
 
                     if regex.match(result[tag]):
