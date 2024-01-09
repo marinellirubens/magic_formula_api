@@ -142,7 +142,7 @@ async def get_cached_info(identifier: str):
     return pickle.loads(pickled_foo)
 
 
-async def format_stock_page(page_content: bytes, logger: logging.Logger(__name__)):
+async def format_stock_page(page_content: bytes, logger = logging.Logger(__name__)):
     try:
         regex = re.compile("^[-\d\,%\.]*$")
         page = BeautifulSoup(page_content, "html.parser") 

@@ -99,7 +99,7 @@ async def process_ticker_info(ticker_general: dict) -> list:
 
     logger.info(f'Starting process for ticker {symbol}')
     page = await status_invest.get_stocks_page_info(symbol)
-    results = await status_invest.format_stock_page(page[1].content)
+    results = await status_invest.format_stock_page(page[1].content, logger)
     ticker_general.update(results)
 
     roic = ticker_general.get('roic', 0)
