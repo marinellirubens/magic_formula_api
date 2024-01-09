@@ -4,7 +4,7 @@ import threading
 
 file_ttl_minutes = 50
 time_to_sleep_minutes = 60
-parallel_number_requests = 6
+parallel_number_requests = 3
 use_cache = False
 
 request_uniques = threading.local()
