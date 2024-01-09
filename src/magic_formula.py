@@ -151,7 +151,7 @@ async def main():
 
         logger.info('Processing stock information')
         resp = await status_invest.get_stocks_info()
-        for ticker in resp.json():
+        for ticker in resp.json().get('list', []):
             tasks.append(process_ticker_info(ticker))
             if len(tasks) > settings.parallel_number_requests and not settings.use_cache:
                 stocks_data += await asyncio.gather(*tasks)
