@@ -1,5 +1,8 @@
 import httpx
 import asyncio
+import logging
+import traceback
+
 from bs4 import BeautifulSoup
 import re
 import lxml
@@ -139,36 +142,39 @@ async def get_cached_info(identifier: str):
     return pickle.loads(pickled_foo)
 
 
-async def format_stock_page(page_content: bytes):
-    regex = re.compile("^[-\d\,%\.]*$")
-    page = BeautifulSoup(page_content, "html.parser") 
-    dom = lxml.etree.HTML(str(page)) 
-    elements = dom.xpath('//div[@id="company-section"]//div[@class="info"]')
-    result = {}
-    tag = ''
-    for element in elements:
-        children = element.xpath('./div//div//strong|./div//div//h3|./div//div//span[@class="d-inline-block mr-2"]')
-        for child in children:
-            if child.text and not child.attrib['class'] == 'title m-0 legend-tooltip':
-                if child.tag in {'h3', 'span'}:
-                    tag = child.text
-                else:
-                    result[tag] = child.text
-                    if child.text in {'--%', '-', '--'}:
-                        result[tag] = '0%'
+async def format_stock_page(page_content: bytes, logger: logging.Logger(__name__)):
+    try:
+        regex = re.compile("^[-\d\,%\.]*$")
+        page = BeautifulSoup(page_content, "html.parser") 
+        dom = lxml.etree.HTML(str(page)) 
+        elements = dom.xpath('//div[@id="company-section"]//div[@class="info"]')
+        result = {}
+        tag = ''
+        for element in elements:
+            children = element.xpath('./div//div//strong|./div//div//h3|./div//div//span[@class="d-inline-block mr-2"]')
+            for child in children:
+                if child.text and not child.attrib['class'] == 'title m-0 legend-tooltip':
+                    if child.tag in {'h3', 'span'}:
+                        tag = child.text
+                    else:
+                        result[tag] = child.text
+                        if child.text in {'--%', '-', '--'}:
+                            result[tag] = '0%'
 
-                    if regex.match(result[tag]):
-                        result[tag] = float(result[tag].replace('.', '').replace('%', '').replace(',', '.'))
+                        if regex.match(result[tag]):
+                            result[tag] = float(result[tag].replace('.', '').replace('%', '').replace(',', '.'))
 
-    elements_sector = dom.xpath('//div[@id="company-section"]//div[@class="top-info top-info-1 top-info-sm-2 top-info-md-n sm d-flex justify-between"]//div[contains(@class, "info")]')
-    for element in elements_sector:
-        children = element.xpath('./div//div//strong|./div//div//span')
-        for child in children:
-            if child.text and not child.attrib['class'] == 'title m-0 legend-tooltip':
-                if child.tag in {'h3', 'span'}:
-                    tag = child.text
-                else:
-                    result[tag] = child.text
+        elements_sector = dom.xpath('//div[@id="company-section"]//div[@class="top-info top-info-1 top-info-sm-2 top-info-md-n sm d-flex justify-between"]//div[contains(@class, "info")]')
+        for element in elements_sector:
+            children = element.xpath('./div//div//strong|./div//div//span')
+            for child in children:
+                if child.text and not child.attrib['class'] == 'title m-0 legend-tooltip':
+                    if child.tag in {'h3', 'span'}:
+                        tag = child.text
+                    else:
+                        result[tag] = child.text
+    except:
+        logger.error(f'error processing {traceback.print_exc()}')
     return result
 
 
