@@ -16,6 +16,96 @@ from config.settings import use_cache, file_ttl_minutes
 
 file_ttl = datetime.timedelta(minutes=file_ttl_minutes)
 
+INDEXES_URLS = {
+    "BRX100L": "https://statusinvest.com.br/indices/indice-brasil-100",
+    "SMALL": "https://statusinvest.com.br/indices/indice-small-cap",
+    "IBOV": "https://statusinvest.com.br/indices/ibovespa",
+    "IDIV": "https://statusinvest.com.br/indices/indice-dividendos",
+    "MLCX": "https://statusinvest.com.br/indices/indice-midlarge-cap",
+    "IGCT": "https://statusinvest.com.br/indices/indice-de-governanca-corporativa-trade",
+    "ITAG": "https://statusinvest.com.br/indices/indice-de-acoes-com-tag-along-diferenciado",
+    "IBRA": "https://statusinvest.com.br/indices/indice-brasil-amplo",
+    "IGNM": "https://statusinvest.com.br/indices/indice-de-governanca-corporativa-–-novo-mercado",
+    "IMAT": "https://statusinvest.com.br/indices/indice-de-materiais-basicos",
+}
+
+async def filter_stocks_by_index(
+        stocks_info: list, indexes: list = ['NONE'], list_tickers: list = [], 
+        logger: logging.Logger = logging.getLogger(__name__)) -> tuple:
+    tickers, index_list = await get_stocks_by_index(indexes, list_tickers, logger)
+    if indexes == ['NONE']:
+        return stocks_info
+
+    return [stock for stock in stocks_info if stock[0] in tickers]
+
+
+async def get_stocks_by_index(
+        indexes: list = ['NONE'], list_tickers: list = [], 
+        logger: logging.Logger = logging.getLogger(__name__)) -> tuple:
+    """Get list of tickers and indexes
+
+    :param logger: Logger
+    :type logger: logging.Logger
+    :return: Tuple with tickers and indexes
+    :rtype: tuple
+    """
+
+    stock_tickers = set(list_tickers)
+    if list_tickers:
+        return stock_tickers, ['LIST', ]
+
+    if indexes == ['NONE', ] or not indexes:
+        return set(), indexes
+
+    stock_tickers = set()
+    if indexes == ['ALL', ]:
+        for index in INDEXES_URLS:
+            stock_tickers.update(await get_index_info(INDEXES_URLS[index], logger))
+        return stock_tickers, indexes
+
+    for index in indexes:
+        stock_tickers.update(await get_index_info(INDEXES_URLS[index], logger))
+    return stock_tickers, indexes
+
+
+async def get_index_info(url: str, logger: logging.Logger) -> set:
+    """Returns set with index tickers
+
+    :param url: status invest url
+    :type url: str
+    :param logger: Logger object
+    :type logger: logging.Logger
+    :return: set with index tickers
+    :rtype: set
+    """
+    logger.info(f'Processing url: {url}')
+
+    headers = {
+      'accept': '*/*',
+      'accept-language': 'en-US,en;q=0.9,pt-BR;q=0.8,pt;q=0.7,es-MX;q=0.6,es;q=0.5',
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'x-requested-with': 'XMLHttpRequest',
+      'sec-ch-ua': '" Not;A Brand";v="99", "Google Chrome";v="97", "Chromium";v="97"',
+      'sec-ch-ua-mobile': '?0',
+      'sec-ch-ua-platform': '"macOS"',
+      'sec-fetch-dest': 'empty',
+      'sec-fetch-mode': 'cors',
+      'sec-fetch-site': 'same-origin',
+      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)'
+    }
+
+    async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
+        resp = await client.get(url, headers=headers)
+
+    request_content = resp.content
+    beatiful_soup = BeautifulSoup(request_content, "html.parser")
+    tickers = \
+        set([x.text for x in list(beatiful_soup.find_all("span", {"class": "ticker"}))])
+
+    logger.info(f'Returned {len(tickers)} tickers')
+
+    return tickers
+
 
 async def get_stocks_info():
     resp = await get_cached_info('get_stocks_info')

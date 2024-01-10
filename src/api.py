@@ -10,17 +10,55 @@ import pandas
 import numpy as np
 from config import settings, parser
 from databases import redis
-
+from status_invest import filter_stocks_by_index
 
 app = Flask(__name__)
 CORS(app)
+
+
+def get_indexes_args():
+    """Bovespa indexes
+        (BRX100, IBOV, SMALL, IDIV, MLCX, IGCT, ITAG, IBRA, IGNM, IMAT, ALL)
+        BRX100 - Indice IBRX100
+        IBOV - IBOVESPA
+        SMALL - Indice de Small Cap
+        IDIV - Indice de Dividendos
+        MLCX - Indice de Mid-Large Cap
+        IGCT - Indice de Governança Corporativa
+        ITAG - Indice de Ações com Tag Along diferenciado
+        IBRA - Indice Brasil Amplo
+        IGNM - Indice de Governança Corporativa - Novo Mercado
+        IMAT - Indice de Materiais Basicos
+        ALL - Todos os Indices anteriores
+
+    Args:
+        request:
+
+    """
+    indexes = request.args.getlist('indexes')
+    if not indexes:
+        indexes = ['NONE', ]
+    return indexes
+
+
+
+def get_list_tickers_args():
+    list_tickers = request.args.getlist('list_tickers', [])
+    return list_tickers
 
 
 @app.route('/', methods=['GET'])
 async def get_stocks_info():
     start = time.perf_counter()
     roic_ignore = int(request.args.get('roic_ignore', 0))
+    indexes = get_indexes_args()
     format = request.args.get('format', 'json').lower()
+    min_ebit = int(request.args.get('min_ebit', 1))
+    min_market_cap = int(request.args.get('min_market_cap', 0))
+    min_amount_stocks = int(request.args.get('min_amount_stocks', 150))
+    graham_max_pl = float(request.args.get('graham_max_pl', 15))
+    graham_max_pvp = float(request.args.get('graham_max_pvp', 1.5))
+    list_tickers = get_list_tickers_args()
 
     identifier = 'magic_formula_main_data'
     conn_info = redis.RedisConnectionInfo(
@@ -30,6 +68,7 @@ async def get_stocks_info():
     )
 
     stocks_data = await redis.get_object_from_redis_async(conn_info, identifier)
+    stocks_data = await filter_stocks_by_index(stocks_data, indexes, list_tickers, app.logger)
     tickers_df = pandas.DataFrame(
         columns=['symbol', 'roic', 'vpa', 'lpa', 'p_l', 'p_vp', 'dividend_yield', 'current_price', 'earning_yield', 'graham_vi', 'graham_upside'],
         data=stocks_data
@@ -79,5 +118,6 @@ def main():
 
 
 if __name__ == '__main__':
-    app.run()
+    app = main()
+    app.run('0.0.0.0', port=5001)
 
