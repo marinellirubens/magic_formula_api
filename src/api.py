@@ -45,9 +45,10 @@ def get_indexes_args():
     return indexes
 
 
-
 def get_list_tickers_args():
     list_tickers = request.args.getlist('list_tickers', [])
+    if list_tickers == ['']:
+        list_tickers = []
     return list_tickers
 
 

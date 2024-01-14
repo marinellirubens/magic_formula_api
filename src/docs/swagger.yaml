@@ -94,6 +94,15 @@ paths:
                 - IGNM
                 - IMAT
                 - NONE
+        - name: list_tickers
+          in: query
+          description: Lista de tickers a serem considerados
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              default: []
       responses:
         '200':
           description: Ações retornadas com sucesso
