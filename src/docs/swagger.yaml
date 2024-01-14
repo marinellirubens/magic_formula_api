@@ -1,0 +1,105 @@
+# swagger file based on openapi 3.0.1
+openapi: 3.0.1
+info:
+  title: Magic formula
+  description: Programa para filtrar ações com base na fórmula mágica de Joel Greenblatt
+  version: 1.1
+
+servers:
+  - url: http://0.0.0.0:8090
+    description: Local server
+
+
+paths:
+  /:
+    get:
+      description: Retorna ações com base na fórmula mágica de Joel Greenblatt
+      tags:
+        - magic_formula
+      parameters:
+        - name: number_of_stocks
+          in: query
+          description: Quantidade de ações a serem retornadas
+          required: false
+          schema:
+            type: integer
+            default: 150
+        - name: min_ebit
+          in: query
+          description: Valor mínimo de EBIT
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: min_market_cap
+          in: query
+          description: Valor mínimo de capitalização de mercado
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: roic_ignore
+          in: query
+          description: Ignorar uso do ROIC na fórmula
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: format
+          in: query
+          description: Formato de retorno
+          required: false
+          schema:
+            type: string
+            default: json
+            nullable: false
+            enum:
+              - json
+              - excel
+        - name: graham_max_pl
+          in: query
+          description: Valor máximo de P/L para a fórmula de Graham
+          required: false
+          schema:
+            type: integer
+            default: 15
+        - name: graham_max_pvp
+          in: query
+          description: Valor máximo de P/VP para a fórmula de Graham
+          required: false
+          schema:
+            type: number
+            default: 1.5
+        - name: indexes
+          in: query
+          description: Índices a serem considerados
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              default: NONE
+              nullable: false
+              enum: # BRX100, IBOV, SMALL, IDIV, MLCX, IGCT, ITAG, IBRA, IGNM, IMAT, ALL
+                - ALL
+                - IBOV
+                - BRX50
+                - BRX100
+                - SMALL
+                - IDIV
+                - MLCX
+                - IGCT
+                - ITAG
+                - IBRA
+                - IGNM
+                - IMAT
+                - NONE
+      responses:
+        '200':
+          description: Ações retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                default: []
+
