@@ -11,3 +11,5 @@ requests
 gunicorn
 pandas
 openpyxl
+pyyaml
+flask_swagger_ui
