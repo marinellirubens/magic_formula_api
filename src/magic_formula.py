@@ -35,6 +35,7 @@ async def calculate_earning_yield(ticker_info: dict) -> float:
         ev = ticker_info.get('Valor de firma', 0)
         # logging.info(ticker_info.get('ticker'), ev, ev_ebit)
         ebit = ev / ev_ebit
+        ticker_info['ebit'] = ebit
         earning_yield = round(ebit / ev, 2)
     except ZeroDivisionError:
         return 0
@@ -111,6 +112,9 @@ async def process_ticker_info(ticker_general: dict) -> list:
     dividend_yield = ticker_general.get('dy', 0)
     current_price = ticker_general.get('price', 0)
     ey = await calculate_earning_yield(ticker_general)
+    # this is calculated on the previous function
+    ebit = ticker_general.get('ebit', 0)
+    market_cap = ticker_general.get('Valor de firma', 0)
     graham_vi = await calculate_graham_vi(vpa, lpa)
     graham_upside = await calculate_graham_upside(current_price, graham_vi)
 
@@ -125,7 +129,9 @@ async def process_ticker_info(ticker_general: dict) -> list:
         current_price,
         ey,
         graham_vi,
-        graham_upside
+        graham_upside,
+        ebit,
+        market_cap
     ]
     logger.info(f'Finishing process for ticker {symbol}')
     return ticker_info

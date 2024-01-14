@@ -29,19 +29,27 @@ INDEXES_URLS = {
     "IMAT": "https://statusinvest.com.br/indices/indice-de-materiais-basicos",
 }
 
-async def filter_stocks_by_index(
-        stocks_info: list, indexes: list = ['NONE'], list_tickers: list = [], 
-        logger: logging.Logger = logging.getLogger(__name__)) -> tuple:
-    tickers, index_list = await get_stocks_by_index(indexes, list_tickers, logger)
+async def filter_stocks(
+        stocks_info: list,
+        indexes: list = ['NONE'],
+        list_tickers: list = [], 
+        min_ebit: int = 1,
+        min_market_cap: int = 0,
+        logger: logging.Logger = logging.getLogger(__name__)) -> list:
+    # filter stocks by indexes
+    tickers = await get_stocks_by_index(indexes, list_tickers, logger)
     if indexes == ['NONE']:
         return stocks_info
+
+    # filter stocks by ebit and market cap
+    stocks_info = [stock for stock in stocks_info if stock[11] >= min_ebit and stock[12] >= min_market_cap]
 
     return [stock for stock in stocks_info if stock[0] in tickers]
 
 
 async def get_stocks_by_index(
         indexes: list = ['NONE'], list_tickers: list = [], 
-        logger: logging.Logger = logging.getLogger(__name__)) -> tuple:
+        logger: logging.Logger = logging.getLogger(__name__)) -> set:
     """Get list of tickers and indexes
 
     :param logger: Logger
@@ -52,20 +60,20 @@ async def get_stocks_by_index(
 
     stock_tickers = set(list_tickers)
     if list_tickers:
-        return stock_tickers, ['LIST', ]
+        return stock_tickers
 
     if indexes == ['NONE', ] or not indexes:
-        return set(), indexes
+        return set()
 
     stock_tickers = set()
     if indexes == ['ALL', ]:
         for index in INDEXES_URLS:
             stock_tickers.update(await get_index_info(INDEXES_URLS[index], logger))
-        return stock_tickers, indexes
+        return stock_tickers
 
     for index in indexes:
         stock_tickers.update(await get_index_info(INDEXES_URLS[index], logger))
-    return stock_tickers, indexes
+    return stock_tickers
 
 
 async def get_index_info(url: str, logger: logging.Logger) -> set:

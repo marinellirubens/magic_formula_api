@@ -10,7 +10,10 @@ import pandas
 import numpy as np
 from config import settings, parser
 from databases import redis
-from status_invest import filter_stocks_by_index
+from status_invest import filter_stocks
+import magic_formula
+from swagger import swagger_blueprint, swagger_base_bp
+
 
 app = Flask(__name__)
 CORS(app)
@@ -36,7 +39,8 @@ def get_indexes_args():
 
     """
     indexes = request.args.getlist('indexes')
-    if not indexes:
+    app.logger.info(f'indexes: {indexes}')
+    if not indexes or indexes == ['']:
         indexes = ['NONE', ]
     return indexes
 
@@ -55,7 +59,7 @@ async def get_stocks_info():
     format = request.args.get('format', 'json').lower()
     min_ebit = int(request.args.get('min_ebit', 1))
     min_market_cap = int(request.args.get('min_market_cap', 0))
-    min_amount_stocks = int(request.args.get('min_amount_stocks', 150))
+    number_of_stocks = int(request.args.get('number_of_stocks', 150))
     graham_max_pl = float(request.args.get('graham_max_pl', 15))
     graham_max_pvp = float(request.args.get('graham_max_pvp', 1.5))
     list_tickers = get_list_tickers_args()
@@ -68,9 +72,15 @@ async def get_stocks_info():
     )
 
     stocks_data = await redis.get_object_from_redis_async(conn_info, identifier)
-    stocks_data = await filter_stocks_by_index(stocks_data, indexes, list_tickers, app.logger)
+    stocks_data = await filter_stocks(stocks_data, indexes, list_tickers, min_ebit, min_market_cap, app.logger)
+    if graham_max_pl != 15 or graham_max_pvp != 1.5:
+        for stock in stocks_data:
+            stock['graham_vi'] = await magic_formula.calculate_graham_vi(stock['vpa'], stock['lpa'], graham_max_pl, graham_max_pvp)
+            stock['graham_upside'] = await magic_formula.calculate_graham_upside(stock['current_price'], stock['graham_vi'])
+
     tickers_df = pandas.DataFrame(
-        columns=['symbol', 'roic', 'vpa', 'lpa', 'p_l', 'p_vp', 'dividend_yield', 'current_price', 'earning_yield', 'graham_vi', 'graham_upside'],
+        columns=['symbol', 'roic', 'vpa', 'lpa', 'p_l', 'p_vp', 'dividend_yield',
+                 'current_price', 'earning_yield', 'graham_vi', 'graham_upside', 'ebit', 'market_cap'],
         data=stocks_data
     )
     tickers_df.sort_values('roic', ascending=False)
@@ -82,8 +92,11 @@ async def get_stocks_info():
 
     tickers_df['earning_yield_index'] = np.arange(tickers_df['earning_yield'].count())
     tickers_df['magic_index'] = tickers_df['earning_yield_index'] + tickers_df['roic_index_number']
-
     tickers_df = tickers_df.sort_values('magic_index', ascending=True)
+
+    if number_of_stocks:
+        tickers_df = tickers_df.head(number_of_stocks)
+
     if format == 'excel':
         filename = f'magic_formula_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.xlsx'
         tickers_df.to_excel(
@@ -114,6 +127,9 @@ def main():
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
+
+    app.register_blueprint(swagger_blueprint)
+    app.register_blueprint(swagger_base_bp)
     return app
 
 
