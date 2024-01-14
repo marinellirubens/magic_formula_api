@@ -6,4 +6,6 @@ DISCLAIMER: não utilizar como base de investimentos, não me responsabilizo pel
 # Referencias
 Para capturar as informações do status invest eu me baseei no projeto [lfreneda/statusinvest](https://github.com/lfreneda/statusinvest), credito para eles pois a parte do status invest é uma versão adaptada desse projeto, so que em python. Fica o meu agradecimento.
 
+# documentação
+Existem informações sobre como usar no endpoint `/docs` com os parametros que podem ser usados e o que cada um faz.
 
