@@ -1,4 +1,3 @@
-import asyncio
 import os
 import time
 import logging
@@ -73,15 +72,21 @@ async def get_stocks_info():
     )
 
     stocks_data = await redis.get_object_from_redis_async(conn_info, identifier)
-    stocks_data = await filter_stocks(stocks_data, indexes, list_tickers, min_ebit, min_market_cap, app.logger)
+    stocks_data = await filter_stocks(stocks_data, indexes, list_tickers,
+                                      min_ebit, min_market_cap, app.logger)
     if graham_max_pl != 15 or graham_max_pvp != 1.5:
         for stock in stocks_data:
-            stock['graham_vi'] = await magic_formula.calculate_graham_vi(stock['vpa'], stock['lpa'], graham_max_pl, graham_max_pvp)
-            stock['graham_upside'] = await magic_formula.calculate_graham_upside(stock['current_price'], stock['graham_vi'])
+            stock['graham_vi'] = await magic_formula.calculate_graham_vi(
+                stock['vpa'], stock['lpa'], graham_max_pl, graham_max_pvp
+            )
+            stock['graham_upside'] = await magic_formula.calculate_graham_upside(
+                stock['current_price'], stock['graham_vi']
+            )
 
     tickers_df = pandas.DataFrame(
         columns=['symbol', 'roic', 'vpa', 'lpa', 'p_l', 'p_vp', 'dividend_yield',
-                 'current_price', 'earning_yield', 'graham_vi', 'graham_upside', 'ebit', 'market_cap'],
+                 'current_price', 'earning_yield', 'graham_vi', 'graham_upside',
+                 'ebit', 'market_cap'],
         data=stocks_data
     )
     tickers_df.sort_values('roic', ascending=False)
