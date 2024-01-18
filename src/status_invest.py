@@ -17,7 +17,7 @@ from config.settings import use_cache, file_ttl_minutes
 file_ttl = datetime.timedelta(minutes=file_ttl_minutes)
 
 INDEXES_URLS = {
-    "BRX100L": "https://statusinvest.com.br/indices/indice-brasil-100",
+    "BRX100": "https://statusinvest.com.br/indices/indice-brasil-100",
     "SMALL": "https://statusinvest.com.br/indices/indice-small-cap",
     "IBOV": "https://statusinvest.com.br/indices/ibovespa",
     "IDIV": "https://statusinvest.com.br/indices/indice-dividendos",

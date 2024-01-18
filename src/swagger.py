@@ -9,8 +9,8 @@ swagger_base_bp = Blueprint('swagger_base', __name__)
 CORS(swagger_base_bp, resource={r"/*": {"origins": "*"}})
 swagger_path = './docs/swagger.yaml'
 
-SWAGGER_URL = '/docs'
-API_URL = '/swagger'
+SWAGGER_URL = '/api/docs'
+API_URL = '/api/swagger'
 
 
 @swagger_base_bp.after_request
