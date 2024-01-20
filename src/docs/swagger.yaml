@@ -83,7 +83,6 @@ paths:
               enum: # BRX100, IBOV, SMALL, IDIV, MLCX, IGCT, ITAG, IBRA, IGNM, IMAT, ALL
                 - ALL
                 - IBOV
-                - BRX50
                 - BRX100
                 - SMALL
                 - IDIV
