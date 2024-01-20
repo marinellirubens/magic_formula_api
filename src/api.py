@@ -51,7 +51,7 @@ def get_list_tickers_args():
     return list_tickers
 
 
-@app.route('/', methods=['GET'])
+@app.route('/api/magic_formula', methods=['GET'])
 async def get_stocks_info():
     start = time.perf_counter()
     roic_ignore = int(request.args.get('roic_ignore', 0))

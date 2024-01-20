@@ -11,7 +11,7 @@ servers:
 
 
 paths:
-  /:
+  /api/magic_formula:
     get:
       description: Retorna ações com base na fórmula mágica de Joel Greenblatt
       tags:
