@@ -56,7 +56,7 @@ async def get_stocks_info():
     start = time.perf_counter()
     roic_ignore = int(request.args.get('roic_ignore', 0))
     indexes = get_indexes_args()
-    format = request.args.get('format', 'json').lower()
+    file_format = request.args.get('format', 'json').lower()
     min_ebit = int(request.args.get('min_ebit', 1))
     min_market_cap = int(request.args.get('min_market_cap', 0))
     number_of_stocks = int(request.args.get('number_of_stocks', 150))
@@ -103,7 +103,7 @@ async def get_stocks_info():
     if number_of_stocks:
         tickers_df = tickers_df.head(number_of_stocks)
 
-    if format == 'excel':
+    if file_format == 'excel':
         filename = f'magic_formula_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}.xlsx'
         tickers_df.to_excel(
             filename,
